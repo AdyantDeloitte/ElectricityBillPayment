@@ -1,0 +1,201 @@
+{
+  "info": {
+    "_postman_id": "electricity-bill-payment-api",
+    "name": "Electricity Bill Payment API",
+    "description": "Complete API collection for Electricity Bill Payment System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"mobile\": \"9876543210\",\n  \"password\": \"SecurePass123\",\n  \"hintId\": \"1\",\n  \"hintAnswer\": \"answer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "register"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Security Hints",
+      "item": [
+        {
+          "name": "Get All Hints",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/hints",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "hints"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bill Management",
+      "item": [
+        {
+          "name": "Get Bill by USN",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/bills/getBillByUSN/USN2024123456789",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bills", "getBillByUSN", "USN2024123456789"]
+            }
+          }
+        },
+        {
+          "name": "Get Bills by User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/bills/user/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bills", "user", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Bill Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PAID\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/bills/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bills", "1", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment Processing",
+      "item": [
+        {
+          "name": "Get Payment Methods",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/payments/methods",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "payments", "methods"]
+            }
+          }
+        },
+        {
+          "name": "Process Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"billId\": 1,\n  \"paymentMethodId\": 1,\n  \"amount\": 2170.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/payments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "payments"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Complaint Management",
+      "item": [
+        {
+          "name": "Register Complaint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceNumber\": \"USN2024123456789\",\n  \"categoryId\": 1,\n  \"subCategoryId\": 1,\n  \"name\": \"Test User\",\n  \"email\": \"complaint@example.com\",\n  \"mobile\": \"9876543210\",\n  \"documentPath\": \"/path/to/doc.pdf\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/complaints",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "complaints"]
+            }
+          }
+        },
+        {
+          "name": "Get Complaints by User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/complaints/user/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "complaints", "user", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Complaint Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/complaints/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "complaints", "1", "status"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    }
+  ]
+}

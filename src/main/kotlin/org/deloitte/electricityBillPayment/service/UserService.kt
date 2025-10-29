@@ -4,10 +4,11 @@ import org.deloitte.electricityBillPayment.dto.UserRegisterRequest
 import org.deloitte.electricityBillPayment.dto.UserRegisterResponse
 import org.deloitte.electricityBillPayment.entity.User
 import org.deloitte.electricityBillPayment.infrastructure.exception.UserException
+import org.deloitte.electricityBillPayment.mapper.toDto
 import org.deloitte.electricityBillPayment.repository.HintRepository
 import org.deloitte.electricityBillPayment.repository.UserRepository
 import org.deloitte.electricityBillPayment.validator.UserRegisterRequestValidator
-import org.slf4j.LoggerFactory
+import org.deloitte.electricityBillPayment.util.logger
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -15,15 +16,15 @@ import kotlin.IllegalArgumentException
 
 @Service
 class UserService(
-    private var userRepository: UserRepository,
-    private var hintRepository: HintRepository,
-    private var userRegisterRequestValidator: UserRegisterRequestValidator,
-    private var passwordEncoder: PasswordEncoder) {
+    private val userRepository: UserRepository,
+    private val hintRepository: HintRepository,
+    private val userRegisterRequestValidator: UserRegisterRequestValidator,
+    private val passwordEncoder: PasswordEncoder) {
 
-    private var logger = LoggerFactory.getLogger(UserService::class.java)
+    private val log = logger<UserService>()
 
-    fun userSignUp(userRegisterRequest: UserRegisterRequest): UserRegisterResponse{
-        logger.info("validating user registration request")
+    fun userSignUp(userRegisterRequest: UserRegisterRequest): UserRegisterResponse {
+        log.info("Validating user registration request")
         userRegisterRequestValidator.validateRegisterRequest(userRegisterRequest)
 
         val hint = hintRepository.findById(userRegisterRequest.hintId.toLong())
@@ -37,26 +38,17 @@ class UserService(
             password = passwordEncoder.encode(userRegisterRequest.password)
             this.hint = hint
             hintAnswer = userRegisterRequest.hintAnswer
-
             createdAt = LocalDateTime.now()
             updatedAt = LocalDateTime.now()
         }
 
-        try{
-            val savedUser = userRepository.save<User>(userEntity)
-            logger.info("user registered successfully with user_id: ${savedUser.id}")
-
-            return UserRegisterResponse(
-                userId = savedUser.id,
-                userName = savedUser.username,
-                name = savedUser.name,
-                email = savedUser.email,
-                mobile = savedUser.mobile
-            )
-
-        } catch(e: Exception){
-            logger.error("error occurred while registering user!")
-            throw UserException("error occurred while registering user:")
+        return try {
+            val savedUser = userRepository.save(userEntity)
+            log.info("User registered successfully with user_id: ${savedUser.id}")
+            savedUser.toDto()
+        } catch (e: Exception) {
+            log.error("Error occurred while registering user", e)
+            throw UserException("Error occurred while registering user: ${e.message}")
         }
     }
 }

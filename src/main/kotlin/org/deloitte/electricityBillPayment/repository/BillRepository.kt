@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository
 interface BillRepository : JpaRepository<Bill, Long>{
 
     fun findByUniqueServiceNumber(uniqueServiceNumber: String): Bill?
+    fun existsByUniqueServiceNumber(uniqueServiceNumber: String): Boolean
 }

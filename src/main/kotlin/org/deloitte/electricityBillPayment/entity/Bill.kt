@@ -55,6 +55,10 @@ class Bill {
     @Column(nullable = false)
     var amountPaidCurrentMonth: Double = 0.0
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var status: BillStatus = BillStatus.PENDING
+
     @CreationTimestamp
     var createdAt: LocalDateTime? = null
 

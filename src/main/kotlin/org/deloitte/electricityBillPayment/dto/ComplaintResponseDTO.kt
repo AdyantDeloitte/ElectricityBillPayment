@@ -8,5 +8,6 @@ data class ComplaintResponseDTO(
     val name: String,
     val email: String,
     val mobile: String,
+    val status: String?,
     val createdAt: String,
 )

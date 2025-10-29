@@ -25,6 +25,12 @@ class UserRegisterRequestValidator(
             if(userRepository.existsByEmail(email)){
                 throw IllegalArgumentException("Email already exist!")
             }
+            if(userRepository.existsByUsername(username)){
+                throw IllegalArgumentException("Username already exist!")
+            }
+            if(userRepository.existsByMobile(mobile)){
+                throw IllegalArgumentException("Mobile already exist!")
+            }
         }
     }
 }

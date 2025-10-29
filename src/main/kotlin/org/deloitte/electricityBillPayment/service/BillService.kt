@@ -1,7 +1,7 @@
 package org.deloitte.electricityBillPayment.service
 
 import org.deloitte.electricityBillPayment.entity.Bill
-import org.deloitte.electricityBillPayment.exception.BillException
+import org.deloitte.electricityBillPayment.infrastructure.exception.BillException
 import org.deloitte.electricityBillPayment.repository.BillRepository
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataAccessException

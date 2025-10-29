@@ -1,8 +1,8 @@
 package org.deloitte.electricityBillPayment.controller
 
 import org.deloitte.electricityBillPayment.entity.Bill
-import org.deloitte.electricityBillPayment.exception.ApiError
-import org.deloitte.electricityBillPayment.exception.BillException
+import org.deloitte.electricityBillPayment.infrastructure.exception.ApiError
+import org.deloitte.electricityBillPayment.infrastructure.exception.BillException
 import org.deloitte.electricityBillPayment.service.BillService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

@@ -14,43 +14,44 @@ import org.springframework.web.bind.annotation.RestController
 import jakarta.validation.Valid
 import org.deloitte.electricityBillPayment.dto.UserLoginRequest
 import org.deloitte.electricityBillPayment.dto.UserLoginResponse
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse as OasApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("\${app.api.base-path}/\${app.api.version}/users")
+@Tag(name = "User", description = "User API operations")
 class UserController(private val userService: UserService) {
 
     private val log = logger<UserController>()
 
     @PostMapping("/register")
+    @Operation(summary = "Register user", description = "Registers a new user")
+    @ApiResponses(
+        value = [
+            OasApiResponse(responseCode = "200", description = "User registered successfully", content = [Content(schema = Schema(implementation = org.deloitte.electricityBillPayment.dto.ApiResponse::class))]),
+            OasApiResponse(responseCode = "400", description = "Invalid input", content = [Content()])
+        ]
+    )
     fun userSignup(@Valid @RequestBody userRegisterRequest: UserRegisterRequest): ResponseEntity<ApiResponse<UserRegisterResponse>> {
         log.info("Starting user registration")
-        return try {
-            val response = userService.userSignUp(userRegisterRequest)
-            ResponseEntity.ok(response.toSuccessResponse("User registered successfully"))
-        } catch (ex: Exception) {
-            log.error("Error during user registration", ex)
-            ResponseEntity.internalServerError().body(
-                ApiResponse.Error(
-                    message = "Failed to register user: ${ex.message}",
-                    code = 500
-                )
-            )
-        }
+        val response = userService.userSignUp(userRegisterRequest)
+        return ResponseEntity.ok(response.toSuccessResponse("User registered successfully"))
     }
 
     @PostMapping("/login")
-    fun userSignIn(@RequestBody userLoginRequest: UserLoginRequest): ResponseEntity<ApiResponse<UserLoginResponse>>{
-        return try{
-            val response = userService.userLogin(userLoginRequest)
-            ResponseEntity.ok(response.toSuccessResponse("user logged in successfully"))
-        } catch (ex: Exception){
-            log.error("Error during user login", ex)
-            ResponseEntity.internalServerError().body(
-                ApiResponse.Error(
-                    message = "Failed to login user: ${ex.message}",
-                    code = 500
-                )
-            )
-        }
+    @Operation(summary = "User login", description = "Authenticates a user and returns profile & bills")
+    @ApiResponses(
+        value = [
+            OasApiResponse(responseCode = "200", description = "Login successful", content = [Content(schema = Schema(implementation = org.deloitte.electricityBillPayment.dto.ApiResponse::class))]),
+            OasApiResponse(responseCode = "400", description = "Invalid input", content = [Content()])
+        ]
+    )
+    fun userSignIn(@Valid @RequestBody userLoginRequest: UserLoginRequest): ResponseEntity<ApiResponse<UserLoginResponse>>{
+        val response = userService.userLogin(userLoginRequest)
+        return ResponseEntity.ok(response.toSuccessResponse("user logged in successfully"))
     }
 }

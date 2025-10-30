@@ -4,32 +4,41 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
+import io.swagger.v3.oas.annotations.media.Schema
 
+@Schema(description = "User registration payload")
 data class UserRegisterRequest(
     @field:NotBlank(message = "Username cannot be blank")
+    @Schema(example = "adyant.singh")
     @field:Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     val username: String,
     
     @field:NotBlank(message = "Name cannot be blank")
+    @Schema(example = "Adyant Singh")
     @field:Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     val name: String,
     
     @field:NotBlank(message = "Email cannot be blank")
+    @Schema(example = "adyant.singh@bhopalpower.in")
     @field:Email(message = "Invalid email format")
     val email: String,
     
     @field:NotBlank(message = "Mobile cannot be blank")
+    @Schema(example = "9826123456")
     @field:Pattern(regexp = "^[0-9]{10}$", message = "Mobile must be exactly 10 digits")
     val mobile: String,
     
     @field:NotBlank(message = "Password cannot be blank")
+    @Schema(example = "Bh0pal@2025")
     @field:Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     val password: String,
     
     @field:NotBlank(message = "Hint ID cannot be blank")
+    @Schema(example = "1")
     val hintId: String,
     
     @field:NotBlank(message = "Hint answer cannot be blank")
+    @Schema(example = "saraswati")
     @field:Size(min = 2, max = 100, message = "Hint answer must be between 2 and 100 characters")
     val hintAnswer: String
 )

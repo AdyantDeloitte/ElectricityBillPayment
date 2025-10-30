@@ -8,14 +8,14 @@ import org.deloitte.electricityBillPayment.entity.BillStatus
 import org.deloitte.electricityBillPayment.entity.PaymentMethod
 import org.deloitte.electricityBillPayment.entity.PaymentTransaction
 import org.deloitte.electricityBillPayment.entity.User
-import org.deloitte.electricityBillPayment.exception.BillException
-import org.deloitte.electricityBillPayment.exception.InvalidPaymentMethodException
-import org.deloitte.electricityBillPayment.exception.PaymentException
+import org.deloitte.electricityBillPayment.exception.ApiException
+import org.deloitte.electricityBillPayment.exception.ErrorCode
 import org.deloitte.electricityBillPayment.mapper.toDto
 import org.deloitte.electricityBillPayment.repository.BillRepository
 import org.deloitte.electricityBillPayment.repository.PaymentMethodRepository
 import org.deloitte.electricityBillPayment.repository.PaymentTransactionRepository
 import org.deloitte.electricityBillPayment.util.logger
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -33,18 +33,18 @@ class PaymentService(
         log.info("Processing payment for billId: ${paymentDto.billId}, amount: ${paymentDto.amount}")
 
         val bill = billRepository.findById(paymentDto.billId)
-            .orElseThrow { BillException("Bill not found with id: ${paymentDto.billId}") }
+            .orElseThrow { ApiException(ErrorCode.NOT_FOUND, "Bill not found with id: ${paymentDto.billId}", HttpStatus.NOT_FOUND) }
 
         val paymentMethod = paymentMethodRepository.findById(paymentDto.paymentMethodId)
-            .orElseThrow { InvalidPaymentMethodException("Payment method not found with id: ${paymentDto.paymentMethodId}") }
+            .orElseThrow { ApiException(ErrorCode.NOT_FOUND, "Payment method not found with id: ${paymentDto.paymentMethodId}", HttpStatus.NOT_FOUND) }
 
-        require(paymentMethod.status == "ACTIVE") { 
-            "Payment method ${paymentMethod.methodName} is not active" 
+        if (paymentMethod.status != "ACTIVE") {
+            throw ApiException(ErrorCode.VALIDATION_ERROR, "Payment method ${paymentMethod.methodName} is not active", HttpStatus.BAD_REQUEST)
         }
 
         val totalAmountDue = bill.totalAmountDueDateAmount
-        require(paymentDto.amount == totalAmountDue) { 
-            "Payment amount ${paymentDto.amount} must match total amount due ${totalAmountDue}. Full payment required." 
+        if (paymentDto.amount != totalAmountDue) {
+            throw ApiException(ErrorCode.VALIDATION_ERROR, "Payment amount ${paymentDto.amount} must match total amount due ${totalAmountDue}. Full payment required.", HttpStatus.BAD_REQUEST)
         }
 
         val transaction = PaymentTransaction().apply {

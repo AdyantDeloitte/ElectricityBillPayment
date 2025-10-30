@@ -6,10 +6,13 @@ import org.deloitte.electricityBillPayment.dto.UserRegisterRequest
 import org.deloitte.electricityBillPayment.dto.UserRegisterResponse
 import org.deloitte.electricityBillPayment.entity.User
 import org.deloitte.electricityBillPayment.exception.UserException
+import org.deloitte.electricityBillPayment.exception.ResourceNotFoundException
+import org.deloitte.electricityBillPayment.exception.ApiException
+import org.deloitte.electricityBillPayment.exception.ErrorCode
+import org.springframework.http.HttpStatus
 import org.deloitte.electricityBillPayment.mapper.toDto
 import org.deloitte.electricityBillPayment.repository.HintRepository
 import org.deloitte.electricityBillPayment.repository.UserRepository
-import org.deloitte.electricityBillPayment.validator.UserRegisterRequestValidator
 import org.deloitte.electricityBillPayment.util.logger
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -21,17 +24,15 @@ class UserService(
     private val userRepository: UserRepository,
     private val hintRepository: HintRepository,
     private val billService: BillService,
-    private val userRegisterRequestValidator: UserRegisterRequestValidator,
     private val passwordEncoder: PasswordEncoder) {
 
     private val log = logger<UserService>()
 
     fun userSignUp(userRegisterRequest: UserRegisterRequest): UserRegisterResponse {
         log.info("Validating user registration request")
-        userRegisterRequestValidator.validateRegisterRequest(userRegisterRequest)
 
         val hint = hintRepository.findById(userRegisterRequest.hintId.toLong())
-            .orElseThrow { IllegalArgumentException("Invalid hint_id: ${userRegisterRequest.hintId}") }
+            .orElseThrow { ApiException(ErrorCode.NOT_FOUND, "Invalid hint_id: ${userRegisterRequest.hintId}", HttpStatus.NOT_FOUND) }
 
         val userEntity = User().apply {
             username = userRegisterRequest.username
@@ -45,14 +46,19 @@ class UserService(
             updatedAt = LocalDateTime.now()
         }
 
-        return try {
-            val savedUser = userRepository.save(userEntity)
-            log.info("User registered successfully with user_id: ${savedUser.id}")
-            savedUser.toDto()
-        } catch (e: Exception) {
-            log.error("Error occurred while registering user", e)
-            throw UserException("Error occurred while registering user: ${e.message}")
+        if (userRepository.existsByUsername(userRegisterRequest.username)) {
+            throw ApiException(ErrorCode.CONFLICT, "Username already exists", HttpStatus.CONFLICT)
         }
+        if (userRepository.existsByEmail(userRegisterRequest.email)) {
+            throw ApiException(ErrorCode.CONFLICT, "Email already exists", HttpStatus.CONFLICT)
+        }
+        if (userRepository.existsByMobile(userRegisterRequest.mobile)) {
+            throw ApiException(ErrorCode.CONFLICT, "Mobile already exists", HttpStatus.CONFLICT)
+        }
+
+        val savedUser = userRepository.save(userEntity)
+        log.info("User registered successfully with user_id: ${savedUser.id}")
+        return savedUser.toDto()
     }
 
     fun userLogin(userLoginRequest: UserLoginRequest): UserLoginResponse{
@@ -61,11 +67,11 @@ class UserService(
 
         val user = userRepository.findByEmail(loginInput) ?:
                     userRepository.findByUsername(loginInput)
-                        ?: throw UserException("Invalid username or email")
+                        ?: throw ApiException(ErrorCode.NOT_FOUND, "Invalid username or email", HttpStatus.NOT_FOUND)
 
         if(!passwordEncoder.matches(password, user.password)){
             log.warn("Invalid password attempt for user: ${user.username}")
-            throw UserException("Invalid Password")
+            throw ApiException(ErrorCode.UNAUTHORIZED, "Invalid password", HttpStatus.UNAUTHORIZED)
         }
         log.info("user: ${user.username} logged in successfully")
         val bills = billService.getBillsByUserId(user.id!!)

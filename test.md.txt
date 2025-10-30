@@ -1,0 +1,10 @@
+Create Bill 
+API path parent
+Duplicate validation - remove from service layer 
+Unique Service no format 
+404 Issue with the Bill management
+Global Exception handler
+Exception handler with centralize level  - on the controller level
+on the complaint service
+parent exception handler  on the service layer instead of controller
+any function and the exception handler is there 

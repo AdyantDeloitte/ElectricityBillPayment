@@ -17,18 +17,6 @@ class UserRegisterRequestValidator(
 
     fun validateRegisterRequest(registerRequest: UserRegisterRequest) {
         with(registerRequest) {
-            require(username.isNotBlank()) { "Username cannot be blank" }
-            require(name.isNotBlank()) { "Name cannot be blank" }
-            require(email.isNotBlank()) { "Email cannot be blank" }
-            require(mobile.isNotBlank()) { "Mobile cannot be blank" }
-            require(password.isNotBlank()) { "Password cannot be blank" }
-            require(hintId.isNotBlank()) { "Hint ID cannot be blank" }
-            require(hintAnswer.isNotBlank()) { "Hint answer cannot be blank" }
-            
-            require(username.isValidUsername()) { "Username format is invalid" }
-            require(email.isValidEmail()) { "Email format is invalid" }
-            require(mobile.isValidMobile()) { "Mobile format is invalid" }
-
             if (userRepository.existsByEmail(email)) {
                 log.warn("Registration attempt with existing email: {}", email)
                 throw IllegalArgumentException("Email already exists!")

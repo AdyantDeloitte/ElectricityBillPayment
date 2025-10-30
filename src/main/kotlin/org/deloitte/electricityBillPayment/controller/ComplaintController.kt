@@ -1,9 +1,12 @@
 package org.deloitte.electricityBillPayment.controller
 
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import org.deloitte.electricityBillPayment.dto.ApiResponse
 import org.deloitte.electricityBillPayment.dto.ComplaintRequestDTO
 import org.deloitte.electricityBillPayment.dto.ComplaintResponseDTO
 import org.deloitte.electricityBillPayment.dto.ErrorCodes
+import org.deloitte.electricityBillPayment.dto.StatusUpdateRequest
 import org.deloitte.electricityBillPayment.dto.toSuccessResponse
 import org.deloitte.electricityBillPayment.entity.ComplaintStatus
 import org.deloitte.electricityBillPayment.exception.ComplaintNotFoundException
@@ -28,7 +31,7 @@ class ComplaintController(
     private val log = logger<ComplaintController>()
 
     @PostMapping
-    fun registerComplaint(@RequestBody complaintRequestDTO: ComplaintRequestDTO): ResponseEntity<ComplaintResponseDTO>{
+    fun registerComplaint(@Valid @RequestBody complaintRequestDTO: ComplaintRequestDTO): ResponseEntity<ComplaintResponseDTO>{
         val registerComplaintResponse = complaintService.registerComplaint(complaintRequestDTO)
         return ResponseEntity.ok(registerComplaintResponse)
     }
@@ -55,7 +58,7 @@ class ComplaintController(
     @PutMapping("/{complaintId}/status")
     fun updateComplaintStatus(
         @PathVariable complaintId: Long,
-        @RequestBody statusUpdate: ComplaintStatusUpdateRequest
+        @Valid @RequestBody statusUpdate: StatusUpdateRequest
     ): ResponseEntity<ApiResponse<ComplaintResponseDTO>> {
         log.info("Updating complaint status for complaintId: {} to status: {}", complaintId, statusUpdate.status)
         
@@ -86,7 +89,3 @@ class ComplaintController(
         }
     }
 }
-
-data class ComplaintStatusUpdateRequest(
-    val status: String
-)

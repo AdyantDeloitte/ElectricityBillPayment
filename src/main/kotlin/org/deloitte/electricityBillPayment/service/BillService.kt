@@ -1,5 +1,6 @@
 package org.deloitte.electricityBillPayment.service
 
+
 import org.deloitte.electricityBillPayment.entity.Bill
 import org.deloitte.electricityBillPayment.entity.BillStatus
 import org.deloitte.electricityBillPayment.exception.BillException
@@ -23,7 +24,7 @@ class BillService(private val repository: BillRepository) {
         return try {
             val bill = repository.findByUniqueServiceNumber(uniqueServiceNumber)
             if (bill == null) {
-                log.info("Bill not found for uniqueServiceNumber='{}'", uniqueServiceNumber)
+                log.info("Bill not found for Unique Service Number='{}'", uniqueServiceNumber)
             }
             bill
         } catch (ex: DataAccessException) {
@@ -73,4 +74,6 @@ class BillService(private val repository: BillRepository) {
             throw BillException("Unexpected error while fetching bills for user $userId", ex)
         }
     }
+
+    fun getBillsByUserId(userId: Long): List<Bill> = repository.findAllByUserID_Id(userId)
 }

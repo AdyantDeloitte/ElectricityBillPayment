@@ -9,4 +9,5 @@ interface BillRepository : JpaRepository<Bill, Long>{
 
     fun findByUniqueServiceNumber(uniqueServiceNumber: String): Bill?
     fun existsByUniqueServiceNumber(uniqueServiceNumber: String): Boolean
+    fun findAllByUserID_Id(userId: Long): List<Bill>
 }

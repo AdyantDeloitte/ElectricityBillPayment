@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import jakarta.validation.Valid
+import org.deloitte.electricityBillPayment.dto.UserLoginRequest
+import org.deloitte.electricityBillPayment.dto.UserLoginResponse
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -30,6 +32,22 @@ class UserController(private val userService: UserService) {
             ResponseEntity.internalServerError().body(
                 ApiResponse.Error(
                     message = "Failed to register user: ${ex.message}",
+                    code = 500
+                )
+            )
+        }
+    }
+
+    @PostMapping("/login")
+    fun userSignIn(@RequestBody userLoginRequest: UserLoginRequest): ResponseEntity<ApiResponse<UserLoginResponse>>{
+        return try{
+            val response = userService.userLogin(userLoginRequest)
+            ResponseEntity.ok(response.toSuccessResponse("user logged in successfully"))
+        } catch (ex: Exception){
+            log.error("Error during user login", ex)
+            ResponseEntity.internalServerError().body(
+                ApiResponse.Error(
+                    message = "Failed to login user: ${ex.message}",
                     code = 500
                 )
             )

@@ -1,128 +1,94 @@
 package org.deloitte.electricityBillPayment.controller
 
 import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 import org.deloitte.electricityBillPayment.dto.ApiResponse
 import org.deloitte.electricityBillPayment.dto.BillDto
-import org.deloitte.electricityBillPayment.dto.ErrorCodes
 import org.deloitte.electricityBillPayment.dto.StatusUpdateRequest
 import org.deloitte.electricityBillPayment.dto.toSuccessResponse
 import org.deloitte.electricityBillPayment.entity.BillStatus
-import org.deloitte.electricityBillPayment.exception.BillException
 import org.deloitte.electricityBillPayment.mapper.toDto
+import org.deloitte.electricityBillPayment.exception.ResourceNotFoundException
 import org.deloitte.electricityBillPayment.service.BillService
 import org.deloitte.electricityBillPayment.util.logger
 import org.springframework.http.MediaType
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.deloitte.electricityBillPayment.dto.BillCreateRequest
+import org.deloitte.electricityBillPayment.dto.errorResponse
+import org.deloitte.electricityBillPayment.dto.ValidationError
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse as OasApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 
 @RestController
-@RequestMapping("/api/v1/bills")
+@RequestMapping("\${app.api.base-path}/\${app.api.version}/bills")
 @Validated
+@Tag(name = "Bill", description = "Bill API operations")
 class BillController(private val billService: BillService) {
 
     private val log = logger<BillController>()
 
     @GetMapping("/getBillByUSN/{uniqueServiceNumber}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @Operation(summary = "Get bill by USN", description = "Fetch bill by unique service number")
+    @ApiResponses(value = [
+        OasApiResponse(responseCode = "200", description = "Bill retrieved successfully", content = [Content(schema = Schema(implementation = org.deloitte.electricityBillPayment.dto.ApiResponse::class))]),
+        OasApiResponse(responseCode = "400", description = "Invalid USN", content = [Content()])
+    ])
     fun getBillByUSN(
-        @PathVariable uniqueServiceNumber: String
+        @PathVariable @Pattern(regexp = "^USN[0-9]+$", message = "USN must start with 'USN' and have digits") uniqueServiceNumber: String
     ): ResponseEntity<ApiResponse<BillDto>> {
         log.debug("Received request to fetch bill for uniqueServiceNumber='{}'", uniqueServiceNumber)
-        return try {
-            val usnPattern = Regex("^USN[0-9]+$")
-            if (!usnPattern.matches(uniqueServiceNumber)) {
-                log.warn("Invalid uniqueServiceNumber format: {}", uniqueServiceNumber)
-                return ResponseEntity.badRequest().body(
-                    ApiResponse.Error(
-                        message = "Invalid uniqueServiceNumber format",
-                        details = "Must start with 'USN' and contain only numeric characters",
-                        code = ErrorCodes.VALIDATION_ERROR
-                    )
-                )
-            }
-
-            val bill = billService.getBillDetails(uniqueServiceNumber)
-            if (bill != null) {
-                ResponseEntity.ok(bill.toDto().toSuccessResponse("Bill retrieved successfully"))
-            } else {
-                log.info("Bill not found for uniqueServiceNumber='{}'", uniqueServiceNumber)
-                ResponseEntity.ok(
-                    ApiResponse.Error(
-                        message = "Bill not found",
-                        details = "Bill not found for Unique Service Number='$uniqueServiceNumber'",
-                        code = ErrorCodes.NOT_FOUND
-                    )
-                )
-            }
-        } catch (ex: BillException) {
-            log.error("Service error while fetching bill for uniqueServiceNumber='{}'", uniqueServiceNumber, ex)
-            return ResponseEntity.internalServerError().body(
-                ApiResponse.Error(
-                    message = ex.message ?: "Service error",
-                    code = ErrorCodes.INTERNAL_SERVER_ERROR
-                )
-            )
+        val regex = Regex("^USN[0-9]+$")
+        if (!regex.matches(uniqueServiceNumber)) {
+            val errors = listOf(ValidationError(field = "uniqueServiceNumber", message = "USN must start with 'USN' and have digits"))
+            val body = errorResponse<BillDto>(message = "Validation failed for one or more fields", errors = errors)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body)
         }
+
+        val bill = billService.getBillDetails(uniqueServiceNumber)
+            ?: throw ResourceNotFoundException("Bill not found for USN $uniqueServiceNumber")
+        return ResponseEntity.ok(bill.toDto().toSuccessResponse("Bill retrieved successfully"))
     }
 
-
     @GetMapping("/user/{userId}")
+    @Operation(summary = "List bills by user", description = "Fetch all bills for a user")
     fun getBillsByUser(@PathVariable userId: Long): ResponseEntity<ApiResponse<List<BillDto>>> {
         log.debug("Fetching bills for user: {}", userId)
-
-        return try {
-            val bills = billService.listBillsByUser(userId)
-            val billDtos = bills.map { it.toDto() }
-            ResponseEntity.ok(billDtos.toSuccessResponse("Bills retrieved successfully"))
-        } catch (ex: BillException) {
-            log.error("Service error while fetching bills for user: {}", userId, ex)
-            ResponseEntity.internalServerError().body(
-                ApiResponse.Error(
-                    message = ex.message ?: "Service error",
-                    code = ErrorCodes.INTERNAL_SERVER_ERROR
-                )
-            )
-        }
+        val bills = billService.listBillsByUser(userId)
+        val billDtos = bills.map { it.toDto() }
+        return ResponseEntity.ok(billDtos.toSuccessResponse("Bills retrieved successfully"))
     }
 
     @PutMapping("/{billId}/status")
+    @Operation(summary = "Update bill status", description = "Update bill status to a new value")
     fun updateBillStatus(
         @PathVariable billId: Long,
         @Valid @RequestBody statusUpdate: StatusUpdateRequest
     ): ResponseEntity<ApiResponse<BillDto>> {
         log.info("Updating bill status for billId: {} to status: {}", billId, statusUpdate.status)
-
-        return try {
-            val status = BillStatus.valueOf(statusUpdate.status.uppercase())
-            val updatedBill = billService.updateBillStatus(billId, status)
-            val billDto = updatedBill.toDto()
-            ResponseEntity.ok(billDto.toSuccessResponse("Bill status updated successfully"))
-        } catch (ex: BillException) {
-            log.error("Service error while updating bill status for billId: {}", billId, ex)
-            ResponseEntity.internalServerError().body(
-                ApiResponse.Error(
-                    message = ex.message ?: "Service error",
-                    code = ErrorCodes.INTERNAL_SERVER_ERROR
-                )
-            )
-        }
+        val status = BillStatus.valueOf(statusUpdate.status.uppercase())
+        val updatedBill = billService.updateBillStatus(billId, status)
+        val billDto = updatedBill.toDto()
+        return ResponseEntity.ok(billDto.toSuccessResponse("Bill status updated successfully"))
     }
 
-    @GetMapping("/getBillByUSN/")
-    fun getBillByUSNMissing(): ResponseEntity<ApiResponse<*>> {
-        log.warn("Missing uniqueServiceNumber in request to getBillByUSN")
-        return ResponseEntity.badRequest().body(
-            ApiResponse.Error(
-                message = "Enter uniqueServiceNumber",
-                details = "uniqueServiceNumber is missing",
-                code = ErrorCodes.VALIDATION_ERROR
-            )
-        )
+    @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
+    @Operation(summary = "Create bill", description = "Create a new bill")
+    fun createBill(@Valid @RequestBody request: BillCreateRequest): ResponseEntity<ApiResponse<BillDto>> {
+        log.info("Creating bill for USN: {}", request.uniqueServiceNumber)
+        val created = billService.createBill(request)
+        return ResponseEntity.status(201).body(created.toDto().toSuccessResponse("Bill created successfully"))
     }
 }

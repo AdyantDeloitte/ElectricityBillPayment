@@ -32,6 +32,25 @@ fun Bill.toDto() = org.deloitte.electricityBillPayment.dto.BillDto(
     updatedAt = updatedAt
 )
 
+fun org.deloitte.electricityBillPayment.dto.BillCreateRequest.toEntity(user: User): Bill {
+    val bill = Bill()
+    bill.userID = user
+    bill.consumerName = this.consumerName
+    bill.uniqueServiceNumber = this.uniqueServiceNumber
+    bill.serviceNumber = this.serviceNumber
+    bill.eroName = this.eroName
+    bill.address = this.address
+    bill.currentMonthBillDate = this.currentMonthBillDate!!
+    bill.currentMonthBillDateAmount = this.currentMonthBillDateAmount!!
+    bill.arrearsDate = this.arrearsDate!!
+    bill.arrearsDateAmount = this.arrearsDateAmount!!
+    bill.totalAmountDueDate = this.totalAmountDueDate!!
+    bill.totalAmountDueDateAmount = this.totalAmountDueDateAmount!!
+    bill.lastMonthPaidDate = this.lastMonthPaidDate!!
+    bill.amountPaidCurrentMonth = this.amountPaidCurrentMonth!!
+    return bill
+}
+
 fun org.deloitte.electricityBillPayment.entity.PaymentMethod.toDto() =
     org.deloitte.electricityBillPayment.dto.PaymentMethodDto(
         id = id,

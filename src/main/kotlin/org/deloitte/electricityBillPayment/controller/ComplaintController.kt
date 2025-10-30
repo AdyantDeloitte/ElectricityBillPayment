@@ -21,9 +21,16 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse as OasApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 
 @RestController
-@RequestMapping("/api/v1/complaints")
+@RequestMapping("\${app.api.base-path}/\${app.api.version}/complaints")
+@Tag(name = "Complaint", description = "Complaint API operations")
 class ComplaintController(
     private val complaintService: ComplaintService
 ) {
@@ -31,61 +38,32 @@ class ComplaintController(
     private val log = logger<ComplaintController>()
 
     @PostMapping
-    fun registerComplaint(@Valid @RequestBody complaintRequestDTO: ComplaintRequestDTO): ResponseEntity<ComplaintResponseDTO>{
+    @Operation(summary = "Register complaint", description = "Create a complaint")
+    fun registerComplaint(@Valid @RequestBody complaintRequestDTO: ComplaintRequestDTO): ResponseEntity<ApiResponse<ComplaintResponseDTO>>{
         val registerComplaintResponse = complaintService.registerComplaint(complaintRequestDTO)
-        return ResponseEntity.ok(registerComplaintResponse)
+        return ResponseEntity.ok(registerComplaintResponse.toSuccessResponse("Complaint registered successfully"))
     }
 
     @GetMapping("/user/{userId}")
+    @Operation(summary = "List user complaints", description = "Fetch all complaints for user")
     fun getComplaintsByUser(@PathVariable userId: Long): ResponseEntity<ApiResponse<List<ComplaintResponseDTO>>> {
         log.debug("Fetching complaints for user: {}", userId)
-        
-        return try {
-            val complaints = complaintService.getComplaintsByUser(userId)
-            val complaintDtos = complaints.map { it.toDto() }
-            ResponseEntity.ok(complaintDtos.toSuccessResponse("Complaints retrieved successfully"))
-        } catch (ex: Exception) {
-            log.error("Error while fetching complaints for user: {}", userId, ex)
-            ResponseEntity.internalServerError().body(
-                ApiResponse.Error(
-                    message = "Failed to retrieve complaints: ${ex.message}",
-                    code = ErrorCodes.INTERNAL_SERVER_ERROR
-                )
-            )
-        }
+        val complaints = complaintService.getComplaintsByUser(userId)
+        val complaintDtos = complaints.map { it.toDto() }
+        return ResponseEntity.ok(complaintDtos.toSuccessResponse("Complaints retrieved successfully"))
     }
 
     @PutMapping("/{complaintId}/status")
+    @Operation(summary = "Update complaint status", description = "Update status of a complaint")
     fun updateComplaintStatus(
         @PathVariable complaintId: Long,
         @Valid @RequestBody statusUpdate: StatusUpdateRequest
     ): ResponseEntity<ApiResponse<ComplaintResponseDTO>> {
         log.info("Updating complaint status for complaintId: {} to status: {}", complaintId, statusUpdate.status)
         
-        return try {
-            val status = ComplaintStatus.valueOf(statusUpdate.status.uppercase())
-            val updatedComplaint = complaintService.updateComplaintStatus(complaintId, status)
-            val complaintDto = updatedComplaint.toDto()
-            ResponseEntity.ok(complaintDto.toSuccessResponse("Complaint status updated successfully"))
-        } catch (ex: IllegalArgumentException) {
-            log.warn("Invalid status: {}", statusUpdate.status)
-            ResponseEntity.badRequest().body(
-                ApiResponse.Error(
-                    message = "Invalid status: ${statusUpdate.status}. Valid statuses: OPEN, IN_PROGRESS, RESOLVED, CLOSED, REJECTED",
-                    code = ErrorCodes.VALIDATION_ERROR
-                )
-            )
-        } catch (ex: ComplaintNotFoundException) {
-            log.warn("Complaint not found: {}", complaintId)
-            ResponseEntity.notFound().build()
-        } catch (ex: Exception) {
-            log.error("Unexpected error while updating complaint status for complaintId: {}", complaintId, ex)
-            ResponseEntity.internalServerError().body(
-                ApiResponse.Error(
-                    message = "Unexpected error occurred",
-                    code = ErrorCodes.INTERNAL_SERVER_ERROR
-                )
-            )
-        }
+        val status = ComplaintStatus.valueOf(statusUpdate.status.uppercase())
+        val updatedComplaint = complaintService.updateComplaintStatus(complaintId, status)
+        val complaintDto = updatedComplaint.toDto()
+        return ResponseEntity.ok(complaintDto.toSuccessResponse("Complaint status updated successfully"))
     }
 }

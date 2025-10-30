@@ -5,5 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface SubCategoryRepository: JpaRepository<SubCategory, Long> {
+interface SubCategoryRepository : JpaRepository<SubCategory, Long> {
+    fun findByCategoryId(categoryId: Long): List<SubCategory>
 }

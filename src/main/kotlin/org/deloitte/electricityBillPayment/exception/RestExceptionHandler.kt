@@ -1,8 +1,8 @@
 package org.deloitte.electricityBillPayment.exception
 
+import org.apache.coyote.BadRequestException
 import org.deloitte.electricityBillPayment.dto.ErrorResponse
 import org.deloitte.electricityBillPayment.dto.ErrorCodes
-import org.deloitte.electricityBillPayment.infrastructure.exception.UserException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -69,6 +69,17 @@ class RestExceptionHandler {
         return ResponseEntity.badRequest().body(error)
     }
 
+    @ExceptionHandler(BadRequestException::class)
+    fun handleBadRequestException(ex: BadRequestException, request: WebRequest): ResponseEntity<ErrorResponse> {
+        log.warn("Bad Request", ex)
+        val error = ErrorResponse(
+            message = ex.message ?: "Bad Request",
+            code = ErrorCodes.VALIDATION_ERROR,
+            path = request.getDescription(false)
+        )
+        return ResponseEntity.badRequest().body(error)
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception, request: WebRequest): ResponseEntity<ErrorResponse> {
         log.error("Unhandled exception", ex)
@@ -77,6 +88,18 @@ class RestExceptionHandler {
             code = ErrorCodes.INTERNAL_SERVER_ERROR,
             path = request.getDescription(false)
         )
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
+    }
+
+    @ExceptionHandler(ComplaintException::class)
+    fun handleComplaintException(ex: ComplaintException): ResponseEntity<ApiError>{
+        log.error("Complaint service exception", ex)
+        val error = ApiError(
+            status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            message = ex.message,
+            timestamp = Instant.now()
+        )
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
     }
 }

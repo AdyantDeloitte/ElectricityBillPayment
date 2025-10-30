@@ -33,4 +33,19 @@ class PaymentTransaction {
     @CreationTimestamp
     var transactionDate: LocalDateTime? = null
 
+    @Column(name = "name_on_card")
+    lateinit var nameOnCard:String
+
+    @Column(name = "card_last_4")
+     var creditCardDetails:Int =0
+
+    @Column(name = "expiry_month")
+     var expiryMonth:Int=0
+
+    @Column(name = "cvv")
+    var cvv:Int=0
+
+    @Column(name = "expiry_year")
+    var expiryYear:Int=0
+
 }

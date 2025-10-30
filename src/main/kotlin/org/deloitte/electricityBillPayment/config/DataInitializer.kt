@@ -83,12 +83,9 @@ class DataInitializer(
 
     private fun initializePaymentMethods() {
         val paymentMethods = listOf(
-            "Credit Card",
-            "Debit Card",
-            "Net Banking",
-            "UPI",
-            "Wallet",
-            "Cash",
+            "Razorpay",
+            "payU",
+            "Stripe",
         )
 
         paymentMethods.forEach { methodName ->

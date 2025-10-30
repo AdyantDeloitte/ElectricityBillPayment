@@ -1,8 +1,9 @@
 package org.deloitte.electricityBillPayment.service
-
 import org.deloitte.electricityBillPayment.dto.ComplaintRequestDTO
 import org.deloitte.electricityBillPayment.dto.ComplaintResponseDTO
 import org.deloitte.electricityBillPayment.entity.Complaint
+import org.deloitte.electricityBillPayment.exception.ComplaintException
+import org.deloitte.electricityBillPayment.exception.UserException
 import org.deloitte.electricityBillPayment.entity.ComplaintStatus
 import org.deloitte.electricityBillPayment.exception.ComplaintNotFoundException
 import org.deloitte.electricityBillPayment.repository.CategoryRepository
@@ -25,9 +26,26 @@ class ComplaintService(
 
     fun registerComplaint(complaintRequestDTO: ComplaintRequestDTO): ComplaintResponseDTO{
 
-        val category = complaintRequestDTO.categoryId?.let { categoryRepository.findById(it).orElseThrow{ Exception("category not found") } }
-        val subCategory = complaintRequestDTO.subCategoryId?.let { subCategoryRepository.findById(it).orElseThrow { Exception("sub category not found") } }
-        val user = complaintRequestDTO.userId?.let { userRepository.findById(it).orElseThrow { Exception("user not found") }}
+        log.info("Logging complaint for consumer number ${complaintRequestDTO.serviceNumber}")
+
+        val category = complaintRequestDTO.categoryId?.let { categoryRepository.findById(it)
+            .orElseThrow{
+                log.warn("Category not found for id: $it")
+                ComplaintException("Category not found for id: $it")
+            }
+        }
+        val subCategory = complaintRequestDTO.subCategoryId?.let { subCategoryRepository.findById(it)
+            .orElseThrow {
+                log.warn("Sub category not found for id: $it")
+                ComplaintException("Sub category not found for id: $it")
+            }
+        }
+        val user = complaintRequestDTO.userId?.let { userRepository.findById(it)
+            .orElseThrow {
+                log.warn("User not found for id: $it")
+                UserException("User not found for id: $it")
+            }
+        }
 
         val complaint = Complaint().apply {
             serviceNumber = complaintRequestDTO.serviceNumber
@@ -43,6 +61,7 @@ class ComplaintService(
         }
 
         val savedComplaint = complaintRepository.save(complaint)
+        log.info("Complaint registered successfully with id: ${savedComplaint.id}")
 
         return ComplaintResponseDTO(
             id = savedComplaint.id ?: 0L,

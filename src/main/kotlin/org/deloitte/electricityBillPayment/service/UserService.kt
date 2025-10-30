@@ -3,7 +3,7 @@ package org.deloitte.electricityBillPayment.service
 import org.deloitte.electricityBillPayment.dto.UserRegisterRequest
 import org.deloitte.electricityBillPayment.dto.UserRegisterResponse
 import org.deloitte.electricityBillPayment.entity.User
-import org.deloitte.electricityBillPayment.infrastructure.exception.UserException
+import org.deloitte.electricityBillPayment.exception.UserException
 import org.deloitte.electricityBillPayment.mapper.toDto
 import org.deloitte.electricityBillPayment.repository.HintRepository
 import org.deloitte.electricityBillPayment.repository.UserRepository

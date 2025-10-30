@@ -32,14 +32,14 @@ fun Bill.toDto() = org.deloitte.electricityBillPayment.dto.BillDto(
     updatedAt = updatedAt
 )
 
-fun org.deloitte.electricityBillPayment.entity.PaymentMethod.toDto() = 
+fun org.deloitte.electricityBillPayment.entity.PaymentMethod.toDto() =
     org.deloitte.electricityBillPayment.dto.PaymentMethodDto(
         id = id,
         methodName = methodName,
         status = status
     )
 
-fun org.deloitte.electricityBillPayment.entity.Complaint.toDto() = 
+fun org.deloitte.electricityBillPayment.entity.Complaint.toDto() =
     org.deloitte.electricityBillPayment.dto.ComplaintResponseDTO(
         id = id ?: 0L,
         serviceNumber = serviceNumber,
@@ -52,8 +52,21 @@ fun org.deloitte.electricityBillPayment.entity.Complaint.toDto() =
         createdAt = createdAt.toString()
     )
 
-fun org.deloitte.electricityBillPayment.entity.Hint.toDto() = 
+fun org.deloitte.electricityBillPayment.entity.Hint.toDto() =
     org.deloitte.electricityBillPayment.dto.HintDto(
         id = id,
         question = question
+    )
+
+fun org.deloitte.electricityBillPayment.entity.SubCategory.toDto() =
+    org.deloitte.electricityBillPayment.dto.SubCategoryDto(
+        id = id,
+        name = name
+    )
+
+fun org.deloitte.electricityBillPayment.entity.Category.toDto() =
+    org.deloitte.electricityBillPayment.dto.CategoryDto(
+        id = id,
+        name = name,
+        subcategories = subcategories.map { it.toDto() }
     )
